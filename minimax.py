@@ -21,7 +21,10 @@ class PacmanAgent(Agent):
         if player:
             value = (float("-inf"), "Directions.STOP")
             for successor in node[0].generatePacmanSuccessors():
-                value = max(value, self.minimax(successor, depth + 1, 0))
+                successor_value = self.minimax(successor, depth - 1, 0)
+                tmp = max(value[0], successor_value[0])
+                if(tmp == successor_value[0]):
+                    value = successor_value
                 print (value[1])
             return value
         
@@ -29,7 +32,10 @@ class PacmanAgent(Agent):
         else:
             value = (float("inf"), "Directions.STOP")
             for successor in node[0].generateGhostSuccessors(1):
-                value = min(value, self.minimax(successor, depth + 1, 1))
+                successor_value = self.minimax(successor, depth - 1, 1)
+                tmp = min(value[0], successor_value[0])
+                if(tmp == successor_value[0]):
+                    value = successor_value
                 print (value[1])
             return value
 
@@ -47,6 +53,6 @@ class PacmanAgent(Agent):
         - A legal move as defined in `game.Directions`.
         """
         node = (state, "Directions.STOP")
-        move = self.minimax(node, 0, 1)
+        move = self.minimax(node, 2, 1)
         print(move)
         return move[1][1]
