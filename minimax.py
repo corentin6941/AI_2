@@ -11,6 +11,7 @@ class PacmanAgent(Agent):
         - `args`: Namespace of arguments from command-line prompt.
         """
         self.args = args
+        self.dictExpanded = {}
         
         
     def hashPosFood(self, state):
@@ -37,9 +38,27 @@ class PacmanAgent(Agent):
         hash3 = hash(state.getGhostPosition(1))
         key = str(hash1) + ' ' + str(hash2) + ' ' + str(hash3)
         return key
+    def inExplored(state)
+        key = self.hashPosFood(state)
         
+        pacmanPos = state.getPacmanPosition()
+        food = state.getFood()
+        ghostPos = state.getGhostPosition()
+        
+        list =[pacmanPos, food, ghostPos]
+        if key not in self.dictExpanded:
+            self.dictExpanded[key] = [list]
+            return False
+        else :
+            for element in dictionnary[key]:
+                if element == list :
+                    return True
+            self.dictExpanded[key].append(list)
+            return False
+            
+            
     def minimax(self, node, depth, player, dictionnary):
-        if depth == 0 or node[0].isWin() or node[0].isLose():
+        if depth == 0 or node[0].isWin() or node[0].isLose() or self.inExpanded(node[0]):
             print (node[0].getScore(), node[1])
             return (node[0].getScore(), node[1])
         
@@ -47,6 +66,7 @@ class PacmanAgent(Agent):
         if player:
             value = (float("-inf"), "Directions.STOP")
             for successor in node[0].generatePacmanSuccessors():
+                
                 key = self.hashPosFood(successor[0])
                 if key not in dictionnary:
                     pacmanPos = successor[0].getPacmanPosition()
