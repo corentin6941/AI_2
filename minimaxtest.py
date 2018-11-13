@@ -1,4 +1,3 @@
-
 from pacman_module.game import Agent
 from pacman_module.pacman import Directions
 
@@ -36,16 +35,17 @@ class PacmanAgent(Agent):
         """
         hash1 = hash(state.getPacmanPosition())
         hash2 = hash(state.getFood())
-        hash3 = hash(state.getGhostPosition(1))
+        posGhost = state.getGhostPositions()[0]
+        hash3 = hash((posGhost[0],posGhost[1]))
         key = str(hash1) + ' ' + str(hash2) + ' ' + str(hash3)
         return key
     
-    def isBestDepth(state, depth)
+    def isBestDepth(self,state, depth):
         key = self.hashPosFood(state)
         
         pacmanPos = state.getPacmanPosition()
         food = state.getFood()
-        ghostPos = state.getGhostPosition()
+        ghostPos = state.getGhostPositions()
         
         list =[pacmanPos, food, ghostPos, depth]
         if key not in self.dictExpanded:
@@ -54,8 +54,8 @@ class PacmanAgent(Agent):
         else :
             for element in self.dictExpanded[key]:
                 if element == list :
-                    if depth < element[3]
-                    element[3] = depth
+                    if depth < element[3]:
+                        element[3] = depth
                     return True
             self.dictExpanded[key].append(list)
             return True
@@ -109,9 +109,9 @@ class PacmanAgent(Agent):
         -------
         - A legal move as defined in `game.Directions`.
         """
-        if not self.listAction
+        if not self.listAction:
             node = (state, "Directions.STOP")
-            move = self.minimax(node, 2, 1, dictExpanded)
+            move = self.minimax(node, 2, 1)
             self.listAction = move[1]
         
         return self.listAction.pop(0)
