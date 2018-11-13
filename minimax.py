@@ -58,26 +58,29 @@ class PacmanAgent(Agent):
             
             
     def minimax(self, node, depth, player, dictionnary):
-        if depth == 0 or node[0].isWin() or node[0].isLose() or self.inExpanded(node[0]):
+        if depth == 0 or node[0].isWin() or node[0].isLose():
             print (node[0].getScore(), node[1])
             return (node[0].getScore(), node[1])
+        
         
         # Maximize function (Pacman)
         if player:
             value = (float("-inf"), "Directions.STOP")
             for successor in node[0].generatePacmanSuccessors():
-                
+                if not inExpanded(node[0])
+                else  
+                    successor_value = self.minimax(successor, depth - 1, 0, dictionnary)
+                    tmp = max(value[0], successor_value[0])
+                    if(tmp == successor_value[0]):
+                        value = successor_value
+                    print (value[1])
                 key = self.hashPosFood(successor[0])
                 if key not in dictionnary:
                     pacmanPos = successor[0].getPacmanPosition()
                     food = successor[0].getFood()
                     ghostPos = successor[0].getGhostPosition(1)
                     dictionnary[key] = [[pacmanPos, food, ghostPos]]
-                    successor_value = self.minimax(successor, depth - 1, 0, dictionnary)
-                    tmp = max(value[0], successor_value[0])
-                    if(tmp == successor_value[0]):
-                        value = successor_value
-                    print (value[1])
+                   
             return value
         
         # Minimize function (Ghost)
