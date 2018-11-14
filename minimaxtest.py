@@ -73,8 +73,7 @@ class PacmanAgent(Agent):
             for successor in node[0].generatePacmanSuccessors():
                 if  self.isBestDepth(successor[0],depth): 
                     successor_value = self.minimax(successor, depth +1, 0) 
-                    tmp = max(value[0], successor_value[0])
-                    if tmp == successor_value[0]:
+                    if successor_value[0] > value[0] :
                         value[0] = successor_value[0]
                         value[1] = successor[0]
             return value
@@ -86,8 +85,7 @@ class PacmanAgent(Agent):
             for successor in node[0].generateGhostSuccessors(1):
                 if self.isBestDepth(successor[0],depth) :
                     successor_value = self.minimax(successor, depth + 1, 1)
-                    tmp = min(value[0], successor_value[0])
-                    if tmp == successor_value[0] :
+                    if successor_value[0] < value[0]:
                         value[0] = successor_value[0]
             return value
 
