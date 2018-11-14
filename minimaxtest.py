@@ -12,8 +12,6 @@ class PacmanAgent(Agent):
         """
         self.args = args
         self.dictExpanded = {}
-        self.listAction = []
-        
         
     def hashPosFood(self, state):
         """
@@ -48,55 +46,58 @@ class PacmanAgent(Agent):
         food = state.getFood()
         ghostPos = state.getGhostPositions()
         
-        list =[pacmanPos, food, ghostPos, depth]
+        stateComponent = (pacmanPos, food, ghostPos)
         if key not in self.dictExpanded:
-            self.dictExpanded[key] = [list]
+            self.dictExpanded[key] = [[stateComponent,depth]]
             return True
         else :
             for element in self.dictExpanded[key]:
-                if element == list :
-                    if depth < element[3]:
-                        element[3] = depth
+                if element[0] == stateComponent :
+                    if depth < element[1]:
+                        element[1] = depth
                         return True
                     return False
-            self.dictExpanded[key].append(list)
+            self.dictExpanded[key].append([stateComponent,depth])
             return True
             
             
     def minimax(self, node, depth, player):
-        if depth == 0 or node[0].isWin() or node[0].isLose():
-            print (node[0].getScore(), node[1])
-            return (node[0].getScore(), [node[1]])
+        if node[0].isWin() or node[0].isLose():
+            
+            return (node[0].getScore(), node[1])
         
         
         # Maximize function (Pacman)
         if player:
-            value = [float("-inf"), ["Directions.STOP"]]
+            value = [float("-inf"), "Directions.STOP"]
             for successor in node[0].generatePacmanSuccessors():
-                if  self.isBestDepth(node[0],depth): 
-                    successor_value = self.minimax(successor, depth - 1, 0) 
+                if  self.isBestDepth(successor[0],depth): 
+                    successor_value = self.minimax(successor, depth +1, 0) 
                     tmp = max(value[0], successor_value[0])
                     if tmp == successor_value[0]:
-                        value = successor_value
-                        childAction = successor_value[1]
-                   
-            newAction = [node[1]] + childAction
-            return (value[0], newAction)
+                        print("in max")
+                        print(depth)
+                        
+                        value[0] = successor_value[0]
+                        value[1] = successor[1]
+                        print(successor_value[1])
+                        print(value)
+                        
+            print(depth)
+            print(value[1])
+            return value
         
         # Minimize function (Ghost)
         else:
-            value = [float("inf"), ["Directions.STOP"]]
+            value = [float("inf"), "Directions.STOP"]
+            
             for successor in node[0].generateGhostSuccessors(1):
-                if self.isBestDepth(node[0],depth) :
-                    successor_value = self.minimax(successor, depth - 1, 1)
+                if self.isBestDepth(successor[0],depth) :
+                    successor_value = self.minimax(successor, depth + 1, 1)
                     tmp = min(value[0], successor_value[0])
                     if tmp == successor_value[0] :
                         value[0] = successor_value[0]
-                        childAction = successor_value[1]
-                    print (value[1])
-                    
-            newAction = [node[1]] + childAction   
-            return (value[0], newAction)
+            return (value[0], "Directions.STOP")
 
     def get_action(self, state):
         """
@@ -111,9 +112,9 @@ class PacmanAgent(Agent):
         -------
         - A legal move as defined in `game.Directions`.
         """
-        if not self.listAction:
-            node = (state, ["Directions.STOP"])
-            move = self.minimax(node, 2, 1)
-            self.listAction = move[1]
-            print(self.listAction)
-        return self.listAction.pop(0)
+        move =[state,"Directions.STOP"]
+       
+        node = (state, "Directions.STOP")
+        move = self.minimax(node, 0, 1)
+        
+        return move[1]
