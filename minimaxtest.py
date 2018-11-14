@@ -1,3 +1,4 @@
+
 from pacman_module.game import Agent
 from pacman_module.pacman import Directions
 
@@ -56,7 +57,8 @@ class PacmanAgent(Agent):
                 if element == list :
                     if depth < element[3]:
                         element[3] = depth
-                    return True
+                        return True
+                    return False
             self.dictExpanded[key].append(list)
             return True
             
@@ -69,32 +71,32 @@ class PacmanAgent(Agent):
         
         # Maximize function (Pacman)
         if player:
-            value = (float("-inf"), ["Directions.STOP"])
+            value = [float("-inf"), ["Directions.STOP"]]
             for successor in node[0].generatePacmanSuccessors():
                 if  self.isBestDepth(node[0],depth): 
                     successor_value = self.minimax(successor, depth - 1, 0) 
                     tmp = max(value[0], successor_value[0])
                     if tmp == successor_value[0]:
                         value = successor_value
-                        childDirList = successor_value[1]
+                        childAction = successor_value[1]
                    
-            newDirAction = [node[1]] + newDirectionList
-            return (value[0], newDirAction)
+            newAction = [node[1]] + childAction
+            return (value[0], newAction)
         
         # Minimize function (Ghost)
         else:
-            value = (float("inf"), ["Directions.STOP"])
+            value = [float("inf"), ["Directions.STOP"]]
             for successor in node[0].generateGhostSuccessors(1):
                 if self.isBestDepth(node[0],depth) :
                     successor_value = self.minimax(successor, depth - 1, 1)
                     tmp = min(value[0], successor_value[0])
                     if tmp == successor_value[0] :
                         value[0] = successor_value[0]
-                        childDirList = successor_value[1]
+                        childAction = successor_value[1]
                     print (value[1])
                     
-            newDirAction = [node[1]]+ childDirAction   
-            return (value[0], newDirAction)
+            newAction = [node[1]] + childAction   
+            return (value[0], newAction)
 
     def get_action(self, state):
         """
@@ -110,8 +112,8 @@ class PacmanAgent(Agent):
         - A legal move as defined in `game.Directions`.
         """
         if not self.listAction:
-            node = (state, "Directions.STOP")
+            node = (state, ["Directions.STOP"])
             move = self.minimax(node, 2, 1)
             self.listAction = move[1]
-        
+            print(self.listAction)
         return self.listAction.pop(0)
