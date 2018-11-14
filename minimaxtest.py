@@ -75,16 +75,8 @@ class PacmanAgent(Agent):
                     successor_value = self.minimax(successor, depth +1, 0) 
                     tmp = max(value[0], successor_value[0])
                     if tmp == successor_value[0]:
-                        print("in max")
-                        print(depth)
-                        
                         value[0] = successor_value[0]
-                        value[1] = successor[1]
-                        print(successor_value[1])
-                        print(value)
-                        
-            print(depth)
-            print(value[1])
+                        value[1] = successor[0]
             return value
         
         # Minimize function (Ghost)
@@ -97,7 +89,7 @@ class PacmanAgent(Agent):
                     tmp = min(value[0], successor_value[0])
                     if tmp == successor_value[0] :
                         value[0] = successor_value[0]
-            return (value[0], "Directions.STOP")
+            return value
 
     def get_action(self, state):
         """
