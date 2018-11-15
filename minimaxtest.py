@@ -12,6 +12,7 @@ class PacmanAgent(Agent):
         """
         self.args = args
         self.dictExpanded = {}
+        self.move = None
         
     def hashPosFood(self, state):
         """
@@ -62,31 +63,39 @@ class PacmanAgent(Agent):
             
             
     def minimax(self, node, depth, player):
-        if node[0].isWin() or node[0].isLose():
+        if node.isWin() or node.isLose():
             
-            return (node[0].getScore(), node[1])
+            return node.getScore()
         
         
         # Maximize function (Pacman)
         if player:
-            value = [float("-inf"), "Directions.STOP"]
-            for successor in node[0].generatePacmanSuccessors():
+            value = float("-inf")
+            for successor in node.generatePacmanSuccessors():
                 if  self.isBestDepth(successor[0],depth): 
-                    successor_value = self.minimax(successor, depth +1, 0) 
-                    if successor_value[0] > value[0] :
-                        value[0] = successor_value[0]
-                        value[1] = successor[0]
+                    successor_value = self.minimax(successor[0], depth +1, 0) 
+                    
+                    if successor_value > value:
+                        value = successor_value
+                        if depth == 0:
+                            self.move = successor[1]
+                        
+           
             return value
         
         # Minimize function (Ghost)
         else:
-            value = [float("inf"), "Directions.STOP"]
+            value = float("inf")
             
-            for successor in node[0].generateGhostSuccessors(1):
+            for successor in node.generateGhostSuccessors(1):
                 if self.isBestDepth(successor[0],depth) :
-                    successor_value = self.minimax(successor, depth + 1, 1)
-                    if successor_value[0] < value[0]:
-                        value[0] = successor_value[0]
+                    successor_value = self.minimax(successor[0], depth + 1, 1)
+                    
+                    if successor_value < value:
+                        value = successor_value
+                        if depth == 0:
+                            self.move = successor[1]
+                        
             return value
 
     def get_action(self, state):
@@ -102,9 +111,6 @@ class PacmanAgent(Agent):
         -------
         - A legal move as defined in `game.Directions`.
         """
-        move =[state,"Directions.STOP"]
-       
-        node = (state, "Directions.STOP")
-        move = self.minimax(node, 0, 1)
+        self.minimax(state, 0, 1)
         
-        return move[1]
+        return self.move
