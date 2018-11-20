@@ -1,7 +1,7 @@
 
 from pacman_module.game import Agent
 from pacman_module.pacman import Directions
-
+from random import randint
 
 class PacmanAgent(Agent):
     def __init__(self, args):
@@ -15,6 +15,17 @@ class PacmanAgent(Agent):
         self.move = None
         self.posFoods =[]
         self.nbMaxFood =None
+         
+        self.a1= 1.4
+        self.a2= 1.2
+        self.a3= 1
+#        self.a1= 1+0.1*randint(0,8)
+#        self.a2= 1+0.1*randint(0,8)
+#        self.a3= randint(0,10)
+#        self.a1= 2.1+0.01*randint(0,20)
+#        self.a2= 1.7+0.01*randint(0,20)
+#        self.a3= randint(0,10)
+        print("({}, {},{})".format(self.a1,self.a2,self.a3))
         
     def manhattanDistance(self, xy1, xy2):
         """
@@ -36,29 +47,46 @@ class PacmanAgent(Agent):
         
         if state.isLose():
             return float("-inf")
-        score = state.getScore()
+        
+        
+        
+        score = state.getScore() 
         ghostPos = state.getGhostPositions()[0]
         pacmanPos = state.getPacmanPosition()
+        distGhost = self.manhattanDistance(ghostPos,pacmanPos)
+        if state.isWin():
+            return score
+     
         gridFood =state.getFood()
         nbFoods = state.getNumFood()
         
-        distGhost = self.manhattanDistance(ghostPos,pacmanPos)
+        
         distFoodMax =0
         distFoodMin = (gridFood.height+gridFood.width)
-        
+        count =0
         for posFood in self.posFoods:
+            
             if gridFood[posFood[0]][posFood[1]]:
                 distFood = self.manhattanDistance(posFood,pacmanPos)
+                
+                count = count +1
+               
                 if distFoodMax < distFood:
                     distFoodMax = distFood
+                    posFoodMax = posFood
+                    
                 if distFoodMin > distFood:
                     distFoodMin =distFood
+                    posFoodMin = posFood
                     
-        return score +nbFoods -distFoodMin -nbFoods*0.5*distFoodMax
+        
+        costAprox = distFoodMin + self.manhattanDistance(posFoodMax, posFoodMin)
+       
+        return score - self.a1*distFoodMin +self.a2*distGhost  -self.a3*nbFoods
 #        return score +500/(1+distFoodMax)+10*nbFoods*distFoodMin/(distFoodMax+1)-500/self.nbMaxFood*nbFoods/(1+distGhost)
 #        return score +500/(1+distFoodMax) + distGhost+ distFoodMax+10*nbFoods
 #        return score - 5*distGhost*nbFoods + nbFoods*distGhost/(distFoodMax+1) +5/(1+distFoodMax)
-        return score - 3* distFoodMin*nbFoods + 7 *distGhost*(nbFoods/self.nbMaxFood)
+      
 ##         
 #        return score +500/(1+distFoodMax)+10*nbFoods/(distFoodMax+1)-500/self.nbMaxFood*nbFoods/(1+distGhost)
 #        return score +5/(1+distFoodMax)+10*nbFoods/(distFoodMax+1)+5*distGhost*(nbFoods/self.nbMaxFood)**2
@@ -179,5 +207,5 @@ class PacmanAgent(Agent):
                     if gridFood[i][j]:
                         self.posFoods.append([i,j])
         self.minimax(state, 0, 1,float("-inf"),float("inf"))
-        print(self.move)
+        
         return self.move
