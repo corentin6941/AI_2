@@ -40,6 +40,22 @@ class PacmanAgent(Agent):
         key = str(hash1) + ' ' + str(hash2) + ' ' + str(hash3)
         return key
     
+    def keysInDict(self,state):
+        key = self.hashPosFood(state)
+        
+        pacmanPos = state.getPacmanPosition()
+        food = state.getFood()
+        ghostPos = state.getGhostPositions()
+        
+        stateComponent = (pacmanPos, food, ghostPos)
+        
+        listInDict =self.dictExpanded[key]
+        
+        for i in range(len(listInDict)):
+            if listInDict[i][0] == stateComponent :
+                return [key,i]
+        return None
+    
     def isBestDepth(self,state, depth):
         key = self.hashPosFood(state)
         
@@ -71,31 +87,48 @@ class PacmanAgent(Agent):
         # Maximize function (Pacman)
         if player:
             value = float("-inf")
+            key = self.hashPosFood(node)
+            hasNoneChild = True
             for successor in node.generatePacmanSuccessors():
                 if  self.isBestDepth(successor[0],depth): 
-                    successor_value = self.minimax(successor[0], depth +1, 0) 
                     
+                    successor_value = self.minimax(successor[0], depth +1, 0) 
+                    if not successor_value :
+                        continue
                     if successor_value > value:
                         value = successor_value
+                        hasNoneChild = False
                         if depth == 0:
                             self.move = successor[1]
                         
-           
+                        else :
+                            [key,index]= self.keysInDict(node)
+                            if len(self.dictExpanded[key][index])==2:
+                                self.dictExpanded[key][index].append(successor[1])
+                        
+                            if len(self.dictExpanded[key][index])==3:
+                                self.dictExpanded[key][index][2] = successor[1]
+            if hasNoneChild:
+                return None
             return value
         
         # Minimize function (Ghost)
         else:
             value = float("inf")
-            
+            hasNoneChild = True
             for successor in node.generateGhostSuccessors(1):
                 if self.isBestDepth(successor[0],depth) :
                     successor_value = self.minimax(successor[0], depth + 1, 1)
+                    if not successor_value :
+                        continue
                     
                     if successor_value < value:
                         value = successor_value
+                        hasNoneChild = False
                         if depth == 0:
                             self.move = successor[1]
-                        
+            if hasNoneChild:
+                return None
             return value
 
     def get_action(self, state):
@@ -111,6 +144,12 @@ class PacmanAgent(Agent):
         -------
         - A legal move as defined in `game.Directions`.
         """
-        self.minimax(state, 0, 1)
+        if not self.move:
+            self.minimax(state, 0, 1)
+
+        else:
+             [key,index] =self.keysInDict(state)
+             self.move =self.dictExpanded[key][index][2]
+             
         
         return self.move
