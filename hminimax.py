@@ -1,7 +1,6 @@
 
 from pacman_module.game import Agent
 from pacman_module.pacman import Directions
-from random import randint
 
 class PacmanAgent(Agent):
     def __init__(self, args):
@@ -11,21 +10,11 @@ class PacmanAgent(Agent):
         - `args`: Namespace of arguments from command-line prompt.
         """
         self.args = args
+        
         self.dictExpanded = {}
         self.move = None
         self.posFoods =[]
-        self.nbMaxFood =None
-         
-        self.a1= 1.4
-        self.a2= 1.2
-        self.a3= 1
-#        self.a1= 1+0.1*randint(0,8)
-#        self.a2= 1+0.1*randint(0,8)
-#        self.a3= randint(0,10)
-#        self.a1= 2.1+0.01*randint(0,20)
-#        self.a2= 1.7+0.01*randint(0,20)
-#        self.a3= randint(0,10)
-        print("({}, {},{})".format(self.a1,self.a2,self.a3))
+        self.dictVisited = {}  
         
     def manhattanDistance(self, xy1, xy2):
         """
@@ -54,8 +43,10 @@ class PacmanAgent(Agent):
         ghostPos = state.getGhostPositions()[0]
         pacmanPos = state.getPacmanPosition()
         distGhost = self.manhattanDistance(ghostPos,pacmanPos)
+        
         if state.isWin():
-            return score
+            return self.maxScore+score
+        
      
         gridFood =state.getFood()
         nbFoods = state.getNumFood()
@@ -63,37 +54,24 @@ class PacmanAgent(Agent):
         
         distFoodMax =0
         distFoodMin = (gridFood.height+gridFood.width)
-        count =0
+        
         for posFood in self.posFoods:
             
             if gridFood[posFood[0]][posFood[1]]:
                 distFood = self.manhattanDistance(posFood,pacmanPos)
-                
-                count = count +1
                
                 if distFoodMax < distFood:
                     distFoodMax = distFood
-                    posFoodMax = posFood
+
                     
                 if distFoodMin > distFood:
                     distFoodMin =distFood
-                    posFoodMin = posFood
-                    
-        
-        costAprox = distFoodMin + self.manhattanDistance(posFoodMax, posFoodMin)
+
        
-        return score - self.a1*distFoodMin +self.a2*distGhost  -self.a3*nbFoods
-#        return score +500/(1+distFoodMax)+10*nbFoods*distFoodMin/(distFoodMax+1)-500/self.nbMaxFood*nbFoods/(1+distGhost)
-#        return score +500/(1+distFoodMax) + distGhost+ distFoodMax+10*nbFoods
-#        return score - 5*distGhost*nbFoods + nbFoods*distGhost/(distFoodMax+1) +5/(1+distFoodMax)
-      
-##         
-#        return score +500/(1+distFoodMax)+10*nbFoods/(distFoodMax+1)-500/self.nbMaxFood*nbFoods/(1+distGhost)
-#        return score +5/(1+distFoodMax)+10*nbFoods/(distFoodMax+1)+5*distGhost*(nbFoods/self.nbMaxFood)**2
-#    
+        return score - 1*distFoodMin +0.09*distGhost  -4*nbFoods
+    
     def hashPosFood(self, state):
-        #good with dumby return score - distFoodMin*self.nbMaxFood/(1+nbFoods)+ distFoodMax*nbFoods/self.nbMaxFood -2*nbFoods
-        #        return score +500/(1+distFoodMax)+10*nbFoods/(distFoodMax+1)-500/self.nbMaxFood*nbFoods/(1+distGhost)
+      
         """
         Arguments:
         ----------
@@ -114,11 +92,30 @@ class PacmanAgent(Agent):
         """
         hash1 = hash(state.getPacmanPosition())
         hash2 = hash(state.getFood())
+        
         posGhost = state.getGhostPositions()[0]
         hash3 = hash((posGhost[0],posGhost[1]))
+        
         key = str(hash1) + ' ' + str(hash2) + ' ' + str(hash3)
+        
         return key
     
+    def isVisited(self,state):
+        key = self.hashPosFood(state)
+        
+        pacmanPos = state.getPacmanPosition()
+        food = state.getFood()
+        ghostPos = state.getGhostPositions()
+        
+        stateComponent = (pacmanPos, food, ghostPos)
+        if key not in self.dictVisited:
+            return False
+        else :
+            for element in self.dictVisited[key]:
+                if element == stateComponent :
+                    return True
+            return False
+            
     def isBestDepth(self,state, depth):
         key = self.hashPosFood(state)
         
@@ -142,7 +139,7 @@ class PacmanAgent(Agent):
             
             
     def minimax(self, node, depth, player, alpha, beta):
-        if depth ==13 or node.isWin() or node.isLose():
+        if depth ==10 or node.isWin() or node.isLose():
             
             return self.evals(node)
         
@@ -151,40 +148,56 @@ class PacmanAgent(Agent):
         if player:
             
             value = float("-inf")
+            hasNoneChild = True
             for successor in node.generatePacmanSuccessors():
+                
+                if self.isVisited(successor[0]):
+                    continue
+                
                 if  self.isBestDepth(successor[0],depth): 
-                    successor_value = self.minimax(successor[0], depth +1, 0, alpha, beta)
                     
+                    successor_value = self.minimax(successor[0], depth +1, 0, alpha, beta)
+
+                    if not successor_value :
+                        continue
                     if successor_value > value:
                         value = successor_value
-                        
+                        hasNoneChild = False
                         if depth == 0:
+                            
                             self.move = successor[1]
                         if value >= beta:
                             return value
                         alpha = max (alpha,value)
                         
-                        
-           
+                       
+            if hasNoneChild:
+                return None
             return value
         
         # Minimize function (Ghost)
         else:
             value = float("inf")
-            
+            hasNoneChild = True
             for successor in node.generateGhostSuccessors(1):
+                if self.isVisited(successor[0]):
+                    continue
                 if self.isBestDepth(successor[0],depth) :
-                    successor_value = self.minimax(successor[0], depth + 1, 1, alpha, beta)
                     
+                    successor_value = self.minimax(successor[0], depth + 1, 1, alpha, beta)
+                    if not successor_value :
+                        continue
                     if successor_value < value:
                         value = successor_value
+                        hasNoneChild = False
                        
                         if value <= alpha:
                             return value
                         beta = min(beta,value)
                         
+            if hasNoneChild:
+                return None
             return value
-
     def get_action(self, state):
         """
         Given a pacman game state, returns a legal move.
@@ -198,14 +211,39 @@ class PacmanAgent(Agent):
         -------
         - A legal move as defined in `game.Directions`.
         """
+        
         self.move = Directions.STOP
         if not self.posFoods:
+            
             gridFood = state.getFood()
-            self.nbMaxFood = state.getNumFood()
+            self.maxScore = state.getNumFood()*10 +0.09*(gridFood.height +gridFood.width)+700
+            
             for i in range(gridFood.width):
                 for j in range(gridFood.height):
                     if gridFood[i][j]:
                         self.posFoods.append([i,j])
-        self.minimax(state, 0, 1,float("-inf"),float("inf"))
+                        
+        key = self.hashPosFood(state)
         
+        pacmanPos = state.getPacmanPosition()
+        food = state.getFood()
+        ghostPos = state.getGhostPositions()
+        
+        stateComponent = (pacmanPos, food, ghostPos)
+        
+        if key not in self.dictVisited:
+            
+            self.dictVisited[key] = [stateComponent]
+        else:
+            self.dictVisited[key].append(stateComponent)
+            
+        self.minimax(state, 0, 1,float("-inf"),float("inf"))
+
+        if self.move == Directions.STOP:
+            
+            self.dictVisited = {}
+            self.dictExpanded ={}
+            
+            self.minimax(state, 0, 1,float("-inf"),float("inf"))
+
         return self.move
