@@ -12,8 +12,8 @@ class PacmanAgent(Agent):
         """
         self.args = args
         self.dictExpanded = {}
-        
-        
+        self.move = None
+
     def hashPosFood(self, state):
         """
         Arguments:
@@ -35,69 +35,170 @@ class PacmanAgent(Agent):
         """
         hash1 = hash(state.getPacmanPosition())
         hash2 = hash(state.getFood())
-        hash3 = hash(state.getGhostPosition(1))
+        posGhost = state.getGhostPositions()[0]
+        hash3 = hash((posGhost[0], posGhost[1]))
         key = str(hash1) + ' ' + str(hash2) + ' ' + str(hash3)
         return key
-    def inExplored(state)
+
+    def keysInDict(self, state):
+        """
+        Arguments:
+        ----------
+        - `state`: a game state see `pacman.GameState`.
+
+        Return:
+        -------
+
+        -[`key`,`index`]: all the information needed to find the state
+        in dictExpanded (i.e. the key of the state in dictExpanded and
+        also the index of the state in dictExpanded[key] list.
+
+        -None : if dictExpanded doesn't countain the state
+
+        """
+
         key = self.hashPosFood(state)
-        
+
+        if key not in self.dictExpanded:
+            return None
+
+        # compute the component of the state
         pacmanPos = state.getPacmanPosition()
         food = state.getFood()
-        ghostPos = state.getGhostPosition()
-        
-        list =[pacmanPos, food, ghostPos]
+        ghostPos = state.getGhostPositions()
+
+        stateComponent = (pacmanPos, food, ghostPos)
+
+        # finds the key  and the index in dictExpanded and returns it
+        listInDict = self.dictExpanded[key]
+        for i in range(len(listInDict)):
+            if listInDict[i][0] == stateComponent:
+                return [key, i]
+        # if it doesn't find it return None
+        # Note: list made to avoid collision problems
+        return None
+
+    def isBestDepth(self, state, depth):
+        """
+        Arguments:
+        ----------
+        - `state`: a game state see `pacman.GameState`.
+        - `depth` : depth in which we found `state`.
+
+        Return:
+        -------
+
+        -True : if state is not in dictExpanded or
+        if `depth` is lower than the one of the corresponding state
+        in dictExpanded.
+
+        -False : if `state` is already in dictExpanded and has a greater
+        or equal `depth`.
+
+        Note: Each time we finds a lower depth we update dictExpanded
+        and if the state wasn't in dictExpanded we add the new companents
+        in the dictionnary
+        """
+        key = self.hashPosFood(state)
+        # compute the component of the state
+        pacmanPos = state.getPacmanPosition()
+        food = state.getFood()
+        ghostPos = state.getGhostPositions()
+
+        stateComponent = (pacmanPos, food, ghostPos)
+
         if key not in self.dictExpanded:
-            self.dictExpanded[key] = [list]
-            return False
-        else :
-            for element in dictionnary[key]:
-                if element == list :
-                    return True
-            self.dictExpanded[key].append(list)
-            return False
-            
-            
-    def minimax(self, node, depth, player, dictionnary):
-        if depth == 0 or node[0].isWin() or node[0].isLose():
-            print (node[0].getScore(), node[1])
-            return (node[0].getScore(), node[1])
-        
-        
+            # dictExpanded contains list to prevent from collision
+            self.dictExpanded[key] = [[stateComponent, depth]]
+            return True
+        else:
+            for element in self.dictExpanded[key]:  # travel the lis
+                if element[0] == stateComponent:
+                    if depth < element[1]:  # updates the depth if better
+                        element[1] = depth
+                        return True
+                    return False  # if the depth is not the best returns false
+            # state not in dictExpanded but another state has the same key
+            self.dictExpanded[key].append([stateComponent, depth])  # updates
+            return True
+
+    def minimax(self, node, depth, player):
+        """
+        Arguments:
+        ----------
+        - `state`: a game state see `pacman.GameState`.
+        - `depth` : depth in which we found `state`.
+        - `player`: this variable is either 0 (for MIN player) or 1 (for
+                     the MAX player)
+        Return:
+        -------
+
+        -value : the best best value (here the score) that the moves of
+        the state can lead.
+        -None : if the state is already expanded with a lower depth
+
+        Note: The moves are stored in self.dictExpanded (dynamic programming)
+        """
+        # utility function
+        if node.isWin() or node.isLose():
+
+            return node.getScore()
+
         # Maximize function (Pacman)
         if player:
-            value = (float("-inf"), "Directions.STOP")
-            for successor in node[0].generatePacmanSuccessors():
-                if not inExpanded(node[0])
-                else  
-                    successor_value = self.minimax(successor, depth - 1, 0, dictionnary)
-                    tmp = max(value[0], successor_value[0])
-                    if(tmp == successor_value[0]):
+            value = float("-inf")
+            key = self.hashPosFood(node)
+
+            # hasNoneChild is true if all the child of node returns None
+            hasNoneChild = True
+            for successor in node.generatePacmanSuccessors():
+                if self.isBestDepth(successor[0], depth):
+
+                    successor_value = self.minimax(successor[0], depth + 1, 0)
+
+                    if not successor_value:  # if it is None we skip the child
+                        continue
+
+                    # getting the gretter value
+                    if successor_value > value:
                         value = successor_value
-                    print (value[1])
-                key = self.hashPosFood(successor[0])
-                if key not in dictionnary:
-                    pacmanPos = successor[0].getPacmanPosition()
-                    food = successor[0].getFood()
-                    ghostPos = successor[0].getGhostPosition(1)
-                    dictionnary[key] = [[pacmanPos, food, ghostPos]]
-                   
+                        hasNoneChild = False
+
+                        if depth == 0:  # saves the first move
+                            self.move = successor[1]
+
+                        else:  # save the moves in self.dictExpanded
+                            [key, index] = self.keysInDict(node)
+                            if len(self.dictExpanded[key][index]) == 2:
+                                self.dictExpanded[key][index].append(
+                                    successor[1])
+
+                            if len(self.dictExpanded[key][index]) == 3:
+                                self.dictExpanded[key][index][2] = successor[1]
+            if hasNoneChild:  # if all the child are None returns None
+                return None
             return value
-        
+
         # Minimize function (Ghost)
         else:
-            value = (float("inf"), "Directions.STOP")
-            for successor in node[0].generateGhostSuccessors(1):
-                key = self.hashPosFood(successor[0])
-                if key not in dictionnary:
-                    pacmanPos = successor[0].getPacmanPosition()
-                    food = successor[0].getFood()
-                    ghostPos = successor[0].getGhostPosition(1)
-                    dictionnary[key] = [[pacmanPos, food, ghostPos]]
-                    successor_value = self.minimax(successor, depth - 1, 1, dictionnary)
-                    tmp = min(value[0], successor_value[0])
-                    if(tmp == successor_value[0]):
+            value = float("inf")
+            # hasNoneChild is true if all the child of node returns None
+            # or all the successors are already expand with a better depth
+            hasNoneChild = True
+            for successor in node.generateGhostSuccessors(1):
+                if self.isBestDepth(successor[0], depth):
+                    successor_value = self.minimax(successor[0], depth + 1, 1)
+
+                    if not successor_value:  # if it is None we skip the child
+                        continue
+                    # getting the lower value
+                    if successor_value < value:
                         value = successor_value
-                    print (value[1])
+                        hasNoneChild = False
+                        if depth == 0:
+                            self.move = successor[1]
+            if hasNoneChild:  # preventing cycle
+                return None
             return value
 
     def get_action(self, state):
@@ -113,8 +214,12 @@ class PacmanAgent(Agent):
         -------
         - A legal move as defined in `game.Directions`.
         """
-        dictExpanded = {}
-        node = (state, "Directions.STOP")
-        move = self.minimax(node, 2, 1, dictExpanded)
-        print(move)
-        return move[1][1]
+        if not self.move:  # if the moves are not computed we call minimax
+            self.minimax(state, 0, 1)
+
+        else:  # if the move is computed we
+            # return the corresponding one in self.dictExpanded
+            [key, index] = self.keysInDict(state)
+            self.move = self.dictExpanded[key][index][2]
+
+        return self.move
