@@ -1,4 +1,3 @@
-
 from pacman_module.game import Agent
 from pacman_module.pacman import Directions
 
@@ -12,9 +11,9 @@ class PacmanAgent(Agent):
         """
         self.args = args
         self.move = None
-        self.dictMove ={}
+        self.dictMove = {}
         self.depth = 0
-    
+
     def hashPosFood(self, state, depth):
         """
         Arguments:
@@ -42,7 +41,7 @@ class PacmanAgent(Agent):
         key = str(hash1) + ' ' + str(hash2) + ' ' + str(hash3)
         key = key + ' ' + str(hash4)
         return key
-   
+
     def minimax(self, node, depth, player, stateExpanded):
         """
         Arguments:
@@ -65,17 +64,17 @@ class PacmanAgent(Agent):
 
             return node.getScore()
 
-		#updating stateExpanded
-        stateComponent =(
+        # updating stateExpanded
+        stateComponent = (
                  node.getGhostPositions()[0],
                  node.getPacmanPosition(),
                  node.getFood()
                  )
-                
+
         newStateExpanded = stateExpanded.copy()
-        
+
         newStateExpanded.add(stateComponent)
-        
+
         # Maximize function (Pacman)
         if player:
             value = float("-inf")
@@ -84,13 +83,13 @@ class PacmanAgent(Agent):
             # hasNoneChild is true if all the child of node returns None
             hasNoneChild = True
             for successor in node.generatePacmanSuccessors():
-                
-                stateComponent =(
+
+                stateComponent = (
                          successor[0].getGhostPositions()[0],
                          successor[0].getPacmanPosition(),
                          successor[0].getFood()
                          )
-                if not stateComponent in newStateExpanded:
+                if stateComponent not in newStateExpanded:
 
                     successor_value = self.minimax(
                             successor[0], depth + 1, 0, newStateExpanded)
@@ -103,11 +102,10 @@ class PacmanAgent(Agent):
                         value = successor_value
                         hasNoneChild = False
                         bestMove = successor[1]
-                        
+
                         if depth == 0:  # saves the first move
                             self.move = successor[1]
 
-                            
             if hasNoneChild:  # if all the child are None returns None
                 return None
             # add the best move in dictMove
@@ -123,12 +121,12 @@ class PacmanAgent(Agent):
             # or all the successors are already expand with a better depth
             hasNoneChild = True
             for successor in node.generateGhostSuccessors(1):
-                stateComponent =(
+                stateComponent = (
                          successor[0].getGhostPositions()[0],
                          successor[0].getPacmanPosition(),
                          successor[0].getFood()
                          )
-                if not stateComponent in newStateExpanded:
+                if stateComponent not in newStateExpanded:
                     successor_value = self.minimax(
                             successor[0], depth + 1, 1, newStateExpanded)
 
@@ -138,7 +136,7 @@ class PacmanAgent(Agent):
                     if successor_value < value:
                         value = successor_value
                         hasNoneChild = False
-                        
+
             if hasNoneChild:  # preventing cycle
                 return None
             return value
@@ -156,10 +154,10 @@ class PacmanAgent(Agent):
         -------
         - A legal move as defined in `game.Directions`.
         """
-        
-        if not self.move:# if the moves are not computed we call minimax
-            
-            self.minimax(state, 0, 1,set())
+
+        if not self.move:  # if the moves are not computed we call minimax
+
+            self.minimax(state, 0, 1, set())
             self.depth = self.depth + 2
 
         else:  # if the move is computed we
