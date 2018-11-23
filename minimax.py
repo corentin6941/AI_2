@@ -1,3 +1,4 @@
+
 from pacman_module.game import Agent
 from pacman_module.pacman import Directions
 
