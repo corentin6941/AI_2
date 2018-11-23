@@ -11,7 +11,7 @@ class PacmanAgent(Agent):
         - `args`: Namespace of arguments from command-line prompt.
         """
         self.args = args
-        self.dictMove ={}
+        self.dictMove = {}
         self.depth = 0
         self.move = None
 
@@ -30,7 +30,7 @@ class PacmanAgent(Agent):
 
         Note:
         -----
-        Only the three data of the state mentioned above are taken
+        Only the four data of the state mentioned above are taken
         into account in the hash function.
 
         """
@@ -42,7 +42,7 @@ class PacmanAgent(Agent):
         key = str(hash1) + ' ' + str(hash2) + ' ' + str(hash3)
         key = key + ' ' + str(hash4)
         return key
-   
+
     def minimax(self, node, depth, player, alpha, beta, stateExpanded):
         """
         Arguments:
@@ -58,16 +58,16 @@ class PacmanAgent(Agent):
 
         -value : the best value (here the score) that the direct moves of
         the state can lead.
-        -None : if the state is already expanded with a lower depth
+        -None : if the state is already expanded
 
-        Note: The moves are stored in self.dictExpanded (dynamic programming)
+        Note: The moves are stored in self.dictMove (dynamic programming)
         """
         # utility function
         if node.isWin() or node.isLose():
 
             return node.getScore()
-        #updating stateExpanded
-        stateComponent =(
+        # updating stateExpanded
+        stateComponent = (
                  node.getGhostPositions()[0],
                  node.getPacmanPosition(),
                  node.getFood()
@@ -81,17 +81,17 @@ class PacmanAgent(Agent):
             # hasNoneChild is true if all the child of node returns None
             hasNoneChild = True
             for successor in node.generatePacmanSuccessors():
-                
-                stateComponent =(
+
+                stateComponent = (
                          successor[0].getGhostPositions()[0],
                          successor[0].getPacmanPosition(),
                          successor[0].getFood()
                          )
-                
-                if not stateComponent in newStateExpanded:
+
+                if stateComponent not in newStateExpanded:
 
                     successor_value = self.minimax(
-                        successor[0], depth + 1, 1, alpha, beta, 
+                        successor[0], depth + 1, 1, alpha, beta,
                         newStateExpanded)
 
                     if not successor_value:  # if it is None we skip the child
@@ -104,14 +104,14 @@ class PacmanAgent(Agent):
                         hasNoneChild = False
                         value = successor_value
                         bestMove = successor[1]
-                        
+
                         if value >= beta:
                             return value
                         alpha = max(alpha, value)
 
                         if depth == 0:  # saves the first move
                             self.move = successor[1]
-                            
+
             if hasNoneChild:  # preventing cycle
                 # if all the child are None or expanded returns None
                 return None
@@ -127,13 +127,13 @@ class PacmanAgent(Agent):
             hasNoneChild = True
             for successor in node.generateGhostSuccessors(1):
 
-                stateComponent =(
+                stateComponent = (
                          successor[0].getGhostPositions()[0],
                          successor[0].getPacmanPosition(),
                          successor[0].getFood()
                          )
-                
-                if not stateComponent in newStateExpanded:  # preventing cycles
+
+                if stateComponent not in newStateExpanded:  # preventing cycles
                     successor_value = self.minimax(
                         successor[0], depth + 1, 1, alpha, beta,
                         newStateExpanded)
@@ -168,19 +168,19 @@ class PacmanAgent(Agent):
         """
         if not self.move:
             self.depth = self.depth + 2
-            self.minimax(state, 0, 1, float("-inf"), float("inf"),set())
+            self.minimax(state, 0, 1, float("-inf"), float("inf"), set())
 
         else:
             key = self.hashPosFood(state, self.depth)
-            if not key in self.dictMove:  # if the move is not computed we
+            if key not in self.dictMove:  # if the move is not computed we
                 # we free dictMove and compute the moves.
-                self.depth = 0 
+                self.depth = 0
                 self.dictMove = {}
-                self.minimax(state, 0, 1, float("-inf"), float("inf"),set())
-                self.depth = self.depth +2
+                self.minimax(state, 0, 1, float("-inf"), float("inf"), set())
+                self.depth = self.depth + 2
             else:  # if the move is computed we
                 # return the corresponding one in self.dictMove
                 self.move = self.dictMove[key]
                 self.depth = self.depth + 2
-                
+
         return self.move
