@@ -79,7 +79,6 @@ class PacmanAgent(Agent):
         # Maximize function (Pacman)
         if player:
             value = float("-inf")
-#            key = self.hashPosFood(node)
 
             # hasNoneChild is true if all the child of node returns None
             hasNoneChild = True
