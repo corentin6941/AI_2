@@ -238,14 +238,6 @@ class PacmanAgent(Agent):
                         if depth == 0:  # saves the first move
                             self.move = successor[1]
 
-                        else:  # save the moves in self.dictExpanded
-                            [key, index] = self.keysInDict(node)
-                            if len(self.dictExpanded[key][index]) == 2:
-                                self.dictExpanded[key][index].append(
-                                    successor[1])
-
-                            if len(self.dictExpanded[key][index]) = =3:
-                                self.dictExpanded[key][index][2] = successor[1]
             # if all the child are None or expanded returns None
             if hasNoneChild:  # preventing cycle
                 return None
